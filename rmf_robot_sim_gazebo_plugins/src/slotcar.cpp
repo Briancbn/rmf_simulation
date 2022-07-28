@@ -132,6 +132,9 @@ void SlotcarPlugin::init_obstacle_exclusions()
         });
       if (name.find("door") != std::string::npos ||
         name.find("lift") != std::string::npos ||
+        name.find("item") != std::string::npos ||
+        name.find("pallet") != std::string::npos ||
+        name.find("conveyor") != std::string::npos ||
         name.find("dispensable") != std::string::npos)
         obstacle_exclusions.insert(m.get());
     }
@@ -148,9 +151,25 @@ std::vector<Eigen::Vector3d> SlotcarPlugin::get_obstacle_positions(
     // Object should not be static, not part of obstacle_exclusions,
     // and close than a threshold (checked by common function)
     const auto p_obstacle = m->WorldPose().Pos();
+
+    std::string name = m->GetName();
+    std::for_each(name.begin(), name.end(), [](char& c)
+      {
+        c = ::tolower(c);
+      });
     if (m->IsStatic() == false &&
-      obstacle_exclusions.find(m.get()) == obstacle_exclusions.end())
-      obstacle_positions.push_back(rmf_plugins_utils::convert_vec(p_obstacle));
+      obstacle_exclusions.find(m.get()) == obstacle_exclusions.end()) {
+      // Update obstacle exclusion
+      if (name.find("door") != std::string::npos ||
+        name.find("lift") != std::string::npos ||
+        name.find("item") != std::string::npos ||
+        name.find("pallet") != std::string::npos ||
+        name.find("dispensable") != std::string::npos) {
+        obstacle_exclusions.insert(m.get());
+      } else {
+        obstacle_positions.push_back(rmf_plugins_utils::convert_vec(p_obstacle));
+      }
+    }
   }
 
   return obstacle_positions;
